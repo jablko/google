@@ -17,6 +17,19 @@ $(document).ready(function ()
                 $(anchor).css('text-decoration', 'line-through');
               }
             },
-          url: $(this).attr('href') });
+          url: $(this).attr('href'),
+
+          // Hack to *not* set X-Requested-With header, which otherwise causes
+          // cross domain requests to be "preflighted",
+          // https://developer.mozilla.org/En/HTTP_access_control
+          xhr: function ()
+            {
+              request = jQuery.ajaxSettings.xhr();
+              request.setRequestHeader = function ()
+                {
+                };
+
+              return request;
+            } });
       });
   });
