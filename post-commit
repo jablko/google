@@ -1,0 +1,146 @@
+#!/usr/bin/env python
+
+import httplib, mimetools, re, svn.core, svn.fs, svn.repos, sys, urllib, urlparse
+from lxml.etree import ElementTree, HTMLParser
+from lxml.cssselect import CSSSelector
+
+# Create HTTP connection from URL scheme, host, and port
+def http_connection(url):
+  components = list(urlparse.urlparse(url))
+
+  if 'https' == components[0]:
+    return httplib.HTTPSConnection(components[1])
+
+  return httplib.HTTPConnection(components[1])
+
+# Depending on the method, add params to the URL or the request body and set
+# any headers.  An HTTP request object would be nice here, but need to remember
+# this is just a quick script to close Google project hosting issues : )
+def encode_params(method, url, params):
+  body = None
+  headers = {}
+
+  if 'POST' == method.upper():
+    headers['Content-Type'] = 'application/x-www-form-urlencoded'
+    body = urllib.urlencode(params)
+
+  else:
+    components = list(urlparse.urlparse(url))
+    components[4] = urllib.urlencode(params)
+    url = urlparse.urlunparse(components)
+
+  return url, headers, body
+
+# Check arguments and print usage
+if 6 != len(sys.argv):
+  print """
+%s requires five arguments,
+
+  [1] REPOS-PATH   (the path to the repository)
+  [2] REV          (the number of the revision)
+  [3] EMAIL        (the Google account email)
+  [4] PASSWORD     (the Google account password)
+  [5] PROJECT      (the Google project hosting project)
+""" % sys.argv[0]
+
+  sys.exit(1)
+
+# Open Subversion repository
+repos = svn.repos.open(sys.argv[1])
+fs = svn.repos.fs(repos)
+
+# Get commit log
+log = svn.fs.revision_prop(fs, int(sys.argv[2]), svn.core.SVN_PROP_REVISION_LOG)
+
+# Find magic words in commit log.  Use list(re.finditer()) instead of
+# re.findall() because re.findall() does not return match objects.
+matches = list(re.finditer('(?:closes|fixes) issue *#?(\\d+)', log, re.I))
+
+if matches:
+
+  # Login to Google account
+  method = 'POST'
+  url = 'https://www.google.com/accounts/LoginAuth'
+  params = [('Email', sys.argv[3]), ('Passwd', sys.argv[4])]
+
+  url, headers, body = encode_params(method, url, params)
+
+  conn = http_connection(url)
+  conn.request(method, url, body, headers)
+  response = conn.getresponse()
+
+  # Get cookie
+  cookie = response.getheader('Set-Cookie')
+
+  # Close Google project hosting issues
+  url = 'http://code.google.com/p/' + sys.argv[5] + '/issues/detail'
+
+  # Close issues with one connection.  Add headers to make it persistent?
+  conn = http_connection(url)
+
+  parser = HTMLParser()
+  tree = ElementTree()
+
+  for match in matches:
+
+    # Get #makechages form
+    method = 'GET'
+    url = 'http://code.google.com/p/' + sys.argv[5] + '/issues/detail'
+    params = [('id', match.group(1))]
+
+    url, headers, body = encode_params(method, url, params)
+
+    headers['Cookie'] = cookie
+
+    conn.request(method, url, body, headers)
+    response = conn.getresponse()
+
+    tree.parse(response, parser)
+
+    sel = CSSSelector('#makechanges form')
+    form = sel(tree)[0]
+
+    # Submit #makechanges form
+    if form.get('method'):
+      method = form.get('method')
+
+    url = urlparse.urljoin(url, form.get('action'))
+
+    params = []
+
+    # Get params from form inputs.  Override comment and status.
+    sel = CSSSelector('input, textarea')
+    for input in sel(form):
+      if 'comment' == input.get('name'):
+        params.append(('comment', 'Fixed in revision ' + sys.argv[2]))
+
+      elif 'status' == input.get('name'):
+        params.append(('status', 'Fixed'))
+
+      else:
+        params.append((input.get('name'), input.get('value')))
+
+    url, headers, body = encode_params(method, url, params)
+
+    headers['Cookie'] = cookie
+
+    # Encode multipart/form-data
+    if 'multipart/form-data' == form.get('enctype'):
+      boundary = mimetools.choose_boundary()
+
+      headers['Content-Type'] = 'multipart/form-data; boundary=' + boundary
+
+      components = []
+      for name, value in params:
+        components.append('--' + boundary)
+        components.append('Content-Disposition: form-data; name="' + name + '"')
+        components.append('')
+        components.append(value)
+
+      components.append('--' + boundary + '--')
+
+      body = '\r\n'.join(components)
+
+    # Close issue
+    conn.request(method, url, body, headers)
+    print 'Closed issue ' + match.group(1) + '.'
