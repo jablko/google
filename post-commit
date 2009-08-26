@@ -143,4 +143,11 @@ if matches:
 
       # Close issue
       conn.request(method, url, body, headers)
+
+      # Note that you must have read the whole response before you can send a
+      # new request to the server.  Actually, you must call getresponse()
+      # before you can send a new request to the server and you must have read
+      # the whole response before you can call getresponse() again : P
+      conn.getresponse().read()
+
       print 'Closed issue ' + match + '.'
