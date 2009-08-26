@@ -1,20 +1,20 @@
-$(document).ready(function ()
+$(function ()
   {
     $('a[href^=http://code.google.com/p/qubit-toolkit/issues/detail?id=]').each(function ()
       {
-        var anchor = this;
+        var a = this;
 
         jQuery.ajax({
           success: function (data)
             {
-              if (!$(anchor).attr('title'))
+              if (!$(a).attr('title'))
               {
-                $(anchor).attr('title', $('#issueheader span', data).text());
+                $(a).attr('title', $('#issueheader span', data).text());
               }
 
               if ($('#issuemeta tr:has(th:contains(Status)) td:contains(Fixed)', data))
               {
-                $(anchor).css('text-decoration', 'line-through');
+                $(a).css('text-decoration', 'line-through');
               }
             },
           url: $(this).attr('href'),
@@ -24,12 +24,12 @@ $(document).ready(function ()
           // https://developer.mozilla.org/En/HTTP_access_control
           xhr: function ()
             {
-              request = jQuery.ajaxSettings.xhr();
-              request.setRequestHeader = function ()
+              xhr = jQuery.ajaxSettings.xhr();
+              xhr.setRequestHeader = function ()
                 {
                 };
 
-              return request;
+              return xhr;
             } });
       });
   });
