@@ -52,7 +52,19 @@ fs = svn.repos.fs(repos)
 # Get commit log
 log = svn.fs.revision_prop(fs, int(sys.argv[2]), svn.core.SVN_PROP_REVISION_LOG)
 
-# Find magic words in commit log
+# Find magic words in commit log, e.g.
+#
+# * Closes issue 123
+# * Fixes issue 123
+# * Closes issues 123 and 321
+# * Closes issue 123 and 321
+# NOT Closes issues 123
+# * Closes issues 123, 321, and 456
+# * Closes issues 123, 321 and 456
+# * Closes issue 123 and issue 321
+# NOT Closes issues 123 and issue 321
+# TODO Closes issues 123, 321, and issue 456
+#
 matches = re.findall('(?:closes|fixes)\\s+issue(?:s?\\s+#?\\d+(?:,?\\s+(?:(?:&|and)\\s+)?#?\\d+)+|\\s+#?\\d+(?:,?\\s+(?:(?:&|and)\\s+)?issue\s+#?\\d+)+)', log, re.I)
 
 if matches:
