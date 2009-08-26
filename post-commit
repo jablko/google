@@ -53,7 +53,7 @@ fs = svn.repos.fs(repos)
 log = svn.fs.revision_prop(fs, int(sys.argv[2]), svn.core.SVN_PROP_REVISION_LOG)
 
 # Find magic words in commit log
-matches = re.findall('(?:closes|fixes)\\s*issue(?:s?\\s*#?\\d+(?:\\s*(?:&|,|and)\\s*#?\\d+)+|\\s*#?\\d+)', log, re.I)
+matches = re.findall('(?:closes|fixes)\\s+issue(?:s?\\s+#?\\d+(?:,?\\s+(?:(?:&|and)\\s+)?#?\\d+)+|\\s+#?\\d+)', log, re.I)
 
 if matches:
 
