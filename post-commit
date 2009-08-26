@@ -52,9 +52,8 @@ fs = svn.repos.fs(repos)
 # Get commit log
 log = svn.fs.revision_prop(fs, int(sys.argv[2]), svn.core.SVN_PROP_REVISION_LOG)
 
-# Find magic words in commit log.  Use list(re.finditer()) instead of
-# re.findall() because re.findall() does not return match objects.
-matches = list(re.finditer('(?:closes|fixes) issue *#?(\\d+)', log, re.I))
+# Find magic words in commit log
+matches = re.findall('(?:closes|fixes)\\s*issue(?:s?\\s*#?\\d+(?:\\s*(?:&|,|and)\\s*#?\\d+)+|\\s*#?\\d+)', log, re.I)
 
 if matches:
 
@@ -82,65 +81,66 @@ if matches:
   tree = ElementTree()
 
   for match in matches:
+    for match in re.findall('\\d+', match, re.I):
 
-    # Get #makechages form
-    method = 'GET'
-    url = 'http://code.google.com/p/' + sys.argv[5] + '/issues/detail'
-    params = [('id', match.group(1))]
+      # Get #makechages form
+      method = 'GET'
+      url = 'http://code.google.com/p/' + sys.argv[5] + '/issues/detail'
+      params = [('id', match)]
 
-    url, headers, body = encode_params(method, url, params)
+      url, headers, body = encode_params(method, url, params)
 
-    headers['Cookie'] = cookie
+      headers['Cookie'] = cookie
 
-    conn.request(method, url, body, headers)
-    response = conn.getresponse()
+      conn.request(method, url, body, headers)
+      response = conn.getresponse()
 
-    tree.parse(response, parser)
+      tree.parse(response, parser)
 
-    sel = CSSSelector('#makechanges form')
-    form = sel(tree)[0]
+      sel = CSSSelector('#makechanges form')
+      form = sel(tree)[0]
 
-    # Submit #makechanges form
-    if form.get('method'):
-      method = form.get('method')
+      # Submit #makechanges form
+      if form.get('method'):
+        method = form.get('method')
 
-    url = urlparse.urljoin(url, form.get('action'))
+      url = urlparse.urljoin(url, form.get('action'))
 
-    params = []
+      params = []
 
-    # Get params from form inputs.  Override comment and status.
-    sel = CSSSelector('input, textarea')
-    for input in sel(form):
-      if 'comment' == input.get('name'):
-        params.append(('comment', 'Fixed in revision ' + sys.argv[2]))
+      # Get params from form inputs.  Override comment and status.
+      sel = CSSSelector('input, textarea')
+      for input in sel(form):
+        if 'comment' == input.get('name'):
+          params.append(('comment', 'Fixed in revision ' + sys.argv[2]))
 
-      elif 'status' == input.get('name'):
-        params.append(('status', 'Fixed'))
+        elif 'status' == input.get('name'):
+          params.append(('status', 'Fixed'))
 
-      else:
-        params.append((input.get('name'), input.get('value')))
+        else:
+          params.append((input.get('name'), input.get('value')))
 
-    url, headers, body = encode_params(method, url, params)
+      url, headers, body = encode_params(method, url, params)
 
-    headers['Cookie'] = cookie
+      headers['Cookie'] = cookie
 
-    # Encode multipart/form-data
-    if 'multipart/form-data' == form.get('enctype'):
-      boundary = mimetools.choose_boundary()
+      # Encode multipart/form-data
+      if 'multipart/form-data' == form.get('enctype'):
+        boundary = mimetools.choose_boundary()
 
-      headers['Content-Type'] = 'multipart/form-data; boundary=' + boundary
+        headers['Content-Type'] = 'multipart/form-data; boundary=' + boundary
 
-      components = []
-      for name, value in params:
-        components.append('--' + boundary)
-        components.append('Content-Disposition: form-data; name="' + name + '"')
-        components.append('')
-        components.append(value)
+        components = []
+        for name, value in params:
+          components.append('--' + boundary)
+          components.append('Content-Disposition: form-data; name="' + name + '"')
+          components.append('')
+          components.append(value)
 
-      components.append('--' + boundary + '--')
+        components.append('--' + boundary + '--')
 
-      body = '\r\n'.join(components)
+        body = '\r\n'.join(components)
 
-    # Close issue
-    conn.request(method, url, body, headers)
-    print 'Closed issue ' + match.group(1) + '.'
+      # Close issue
+      conn.request(method, url, body, headers)
+      print 'Closed issue ' + match + '.'
