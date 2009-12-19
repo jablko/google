@@ -1,0 +1,26 @@
+import base64, httplib, mod_python, urlparse
+
+# Create HTTP connection from URL scheme, host, and port
+def http_connection(url):
+  components = list(urlparse.urlparse(url))
+
+  if 'https' == components[0]:
+    return httplib.HTTPSConnection(components[1])
+
+  return httplib.HTTPConnection(components[1])
+
+def authenhandler(r):
+  method = 'GET'
+  url = 'https://archivematica.googlecode.com/svn/'
+
+  headers = {
+    'Authorization': 'Basic ' + base64.b64encode(r.user + ':' + r.get_basic_auth_pw()) }
+
+  conn = http_connection(url)
+  conn.request(method, url, None, headers)
+  response = conn.getresponse()
+
+  if httplib.OK == response.status:
+    return mod_python.apache.OK
+
+  return mod_python.apache.HTTP_UNAUTHORIZED
