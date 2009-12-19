@@ -15,7 +15,7 @@ $(function ()
                 $(a).attr('title', $('#issueheader span', data).text());
               }
 
-              if ($('#issuemeta tr:has(th:contains(Status)) td:contains(Fixed)', data))
+              if ($('#issuemeta tr:has(th:contains(Status)) td:contains(Fixed)', data).length)
               {
                 $(a).css('text-decoration', 'line-through');
               }
