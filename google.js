@@ -5,6 +5,9 @@ $(function ()
         var a = this;
 
         jQuery.ajax({
+
+          url: 'http://alloworiginproxy.appspot.com/' + $(this).attr('href'),
+
           success: function (data)
             {
               if (!$(a).attr('title'))
@@ -17,7 +20,6 @@ $(function ()
                 $(a).css('text-decoration', 'line-through');
               }
             },
-          url: 'http://alloworiginproxy.appspot.com/' + $(this).attr('href'),
 
           // Hack to *not* set X-Requested-With header, which otherwise causes
           // cross domain requests to be "preflighted",
