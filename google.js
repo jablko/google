@@ -17,7 +17,7 @@ $(function ()
                 $(a).css('text-decoration', 'line-through');
               }
             },
-          url: $(this).attr('href'),
+          url: 'http://alloworiginproxy.appspot.com/' + $(this).attr('href'),
 
           // Hack to *not* set X-Requested-With header, which otherwise causes
           // cross domain requests to be "preflighted",
