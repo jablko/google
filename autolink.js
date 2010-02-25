@@ -20,10 +20,10 @@ $(function ()
                 return $0.replace(/#?(\d+)/gi, '<a class="external text" href="http://code.google.com/p/qubit-toolkit/source/detail?r=$1">$&</a>');
               })
             .replace(/\b(?:commit|revision)\s+#?(\d+)\b/gi, '<a class="external text" href="http://code.google.com/p/qubit-toolkit/source/detail?r=$1">$&</a>')
-            .replace(/\bissues?\s+#?\d+(?:,?\s+(?:(?:&|and)\s+)?#?\d+)+\b/gi, function ($0)
+            .replace(/\b(?:issue|bug)s?\s+#?\d+(?:,?\s+(?:(?:&|and)\s+)?#?\d+)+\b/gi, function ($0)
               {
                 return $0.replace(/#?(\d+)/gi, '<a class="external text" href="http://code.google.com/p/qubit-toolkit/issues/detail?id=$1">$&</a>');
               })
-            .replace(/\bissue\s+#?(\d+)\b/gi, '<a class="external text" href="http://code.google.com/p/qubit-toolkit/issues/detail?id=$1">$&</a>'));
+            .replace(/\b(?:issue|bug)\s+#?(\d+)\b/gi, '<a class="external text" href="http://code.google.com/p/qubit-toolkit/issues/detail?id=$1">$&</a>'));
         });
   });
