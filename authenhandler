@@ -10,7 +10,7 @@ def http_connection(url):
   return httplib.HTTPConnection(components[1])
 
 def authenhandler(r):
-  method = 'GET'
+  method = 'MKACTIVITY'
   url = 'https://archivematica.googlecode.com/svn/'
 
   headers = {
@@ -20,7 +20,7 @@ def authenhandler(r):
   conn.request(method, url, None, headers)
   response = conn.getresponse()
 
-  if httplib.OK == response.status:
+  if httplib.CONFLICT == response.status:
     return mod_python.apache.OK
 
   return mod_python.apache.HTTP_UNAUTHORIZED
