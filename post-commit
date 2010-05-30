@@ -94,27 +94,55 @@ matches = re.findall('(?:closes|fixes)\\s+issue(?:s?\\s+#?\\d+(?:,?\\s+(?:(?:&|a
 if matches:
 
   # Login to Google account
-  method = 'POST'
+  method = 'GET'
   url = 'https://www.google.com/accounts/LoginAuth'
-  params = [('Email', sys.argv[3]), ('Passwd', sys.argv[4])]
-
-  url, headers, body = encode_params(method, url, params)
 
   conn = http_connection(url)
-  conn.request(method, url, body, headers)
+
+  conn.request(method, url)
   response = conn.getresponse()
 
   # Get cookie
   cookie = response.getheader('Set-Cookie')
+
+  parser = HTMLParser()
+  tree = ElementTree()
+
+  tree.parse(response, parser)
+
+  sel = CSSSelector('#gaia_loginform')
+  form = sel(tree)[0]
+
+  # Submit #gaia_loginform
+  if form.get('method'):
+    method = form.get('method')
+
+  params = []
+
+  # Get params from form inputs.  Override email and password.
+  sel = CSSSelector('input, textarea')
+  for input in sel(form):
+    if 'Email' == input.get('name'):
+      params.append(('Email', sys.argv[3]))
+
+    elif 'Passwd' == input.get('name'):
+      params.append(('Passwd', sys.argv[4]))
+
+    else:
+      params.append((input.get('name'), input.get('value')))
+
+  url, headers, body = encode_form(method, url, params, form)
+
+  headers['Cookie'] = cookie
+
+  conn.request(method, url, body, headers)
+  response = conn.getresponse()
 
   # Close Google project hosting issues
   url = 'http://code.google.com/p/' + sys.argv[5] + '/issues/detail'
 
   # Close issues with one connection.  Add headers to make it persistent?
   conn = http_connection(url)
-
-  parser = HTMLParser()
-  tree = ElementTree()
 
   for match in matches:
     for match in re.findall('\\d+', match, re.I):
