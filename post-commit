@@ -31,6 +31,30 @@ def encode_params(method, url, params):
 
   return url, headers, body
 
+def encode_form(method, url, params, form):
+  url = urlparse.urljoin(url, form.get('action'))
+
+  url, headers, body = encode_params(method, url, params)
+
+  # Encode multipart/form-data
+  if 'multipart/form-data' == form.get('enctype'):
+    boundary = mimetools.choose_boundary()
+
+    headers['Content-Type'] = 'multipart/form-data; boundary=' + boundary
+
+    components = []
+    for name, value in params:
+      components.append('--' + boundary)
+      components.append('Content-Disposition: form-data; name="' + name + '"')
+      components.append('')
+      components.append(value)
+
+    components.append('--' + boundary + '--')
+
+    body = '\r\n'.join(components)
+
+  return url, headers, body
+
 # Check arguments and print usage
 if 6 != len(sys.argv):
   print """
@@ -116,8 +140,6 @@ if matches:
       if form.get('method'):
         method = form.get('method')
 
-      url = urlparse.urljoin(url, form.get('action'))
-
       params = []
 
       # Get params from form inputs.  Override comment and status.
@@ -132,26 +154,9 @@ if matches:
         else:
           params.append((input.get('name'), input.get('value')))
 
-      url, headers, body = encode_params(method, url, params)
+      url, headers, body = encode_form(method, url, params, form)
 
       headers['Cookie'] = cookie
-
-      # Encode multipart/form-data
-      if 'multipart/form-data' == form.get('enctype'):
-        boundary = mimetools.choose_boundary()
-
-        headers['Content-Type'] = 'multipart/form-data; boundary=' + boundary
-
-        components = []
-        for name, value in params:
-          components.append('--' + boundary)
-          components.append('Content-Disposition: form-data; name="' + name + '"')
-          components.append('')
-          components.append(value)
-
-        components.append('--' + boundary + '--')
-
-        body = '\r\n'.join(components)
 
       # Close issue
       conn.request(method, url, body, headers)
