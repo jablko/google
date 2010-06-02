@@ -141,6 +141,9 @@ if matches:
   conn.request(method, url, body, headers)
   response = conn.getresponse()
 
+  # Get cookie
+  cookie = response.getheader('Set-Cookie')
+
   # Close Google project hosting issues
   url = 'http://code.google.com/p/' + sys.argv[5] + '/issues/detail'
 
