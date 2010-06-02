@@ -180,7 +180,7 @@ if matches:
       sel = CSSSelector('input, textarea')
       for input in sel(form):
         if 'comment' == input.get('name'):
-          params.append(('comment', 'Fixed in revision ' + sys.argv[2]))
+          params.append(('comment', 'Fixed in commit ' + sys.argv[2]))
 
         elif 'status' == input.get('name'):
           params.append(('status', 'Fixed'))
