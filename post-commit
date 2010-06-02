@@ -95,11 +95,14 @@ if matches:
 
   # Login to Google account
   method = 'GET'
-  url = 'https://www.google.com/accounts/LoginAuth'
+  url = 'https://www.google.com/accounts/ServiceLogin'
+  params = [('service', 'code')]
+
+  url, headers, body = encode_params(method, url, params)
 
   conn = http_connection(url)
 
-  conn.request(method, url)
+  conn.request(method, url, body, headers)
   response = conn.getresponse()
 
   # Get cookie
