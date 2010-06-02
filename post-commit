@@ -115,7 +115,7 @@ if matches:
 
   # Submit #gaia_loginform
   if form.get('method'):
-    method = form.get('method')
+    method = form.get('method').upper()
 
   params = []
 
@@ -166,7 +166,7 @@ if matches:
 
       # Submit #makechanges form
       if form.get('method'):
-        method = form.get('method')
+        method = form.get('method').upper()
 
       params = []
 
