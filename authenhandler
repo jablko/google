@@ -21,6 +21,10 @@ def authenhandler(r):
   response = conn.getresponse()
 
   if httplib.CONFLICT == response.status:
+
+    if '@' not in r.user:
+      r.user += '@gmail.com'
+
     return mod_python.apache.OK
 
   return mod_python.apache.HTTP_UNAUTHORIZED
